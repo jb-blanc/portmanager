@@ -1,0 +1,15 @@
+{
+    "name": "portmanager",
+    "version": "1.0.0",
+    "description": "Simple port manager",
+    "main": "portmanager.js",
+    "scripts": {
+        "start": "node portmanager.js"
+    },
+    "author": "jb-blanc",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.16.3",
+        "fs": "^0.0.1-security"
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "appPort":55101,
+    "portMin":55500,
+    "portMax":55555
+}
