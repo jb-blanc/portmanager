@@ -1,6 +1,5 @@
 let PortManagerServer = require("./component/portmanager.server");
 let PortManagerClient = require("./component/portmanager.client");
-let http = require('http');
 
 let CONF_FILE = __dirname + "/manager.conf.json"
 console.log("Giving confFile : ", CONF_FILE);
