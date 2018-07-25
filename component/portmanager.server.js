@@ -37,12 +37,16 @@ PortManagerServer.prototype.readConf = function(confFile){
     return this;
 };
 
+/**
+ * Refresh config without restarting application
+ */
 PortManagerServer.prototype.refreshConf = function(){
-    return this.readConf(this.confFile);
-}
+    return this.readConf(this.confFile).restart();
+};
 
 /**
  * https://stackoverflow.com/a/21947851
+ * Init proper way to exit application
  */
 PortManagerServer.prototype.beforeExitInit = function(){
     var that = this;
@@ -65,12 +69,19 @@ PortManagerServer.prototype.beforeExitInit = function(){
     });
 };
 
+/**
+ * Indicates weither or not the server should save datas to config file
+ */
 PortManagerServer.prototype.persist = function(persistData){
     this.persistData = persistData | false;
     return this;
 };
 
+/**
+ * Action taken before exiting application
+ */
 PortManagerServer.prototype.beforeExit = function(){
+    console.log("Server- Cleaning informations");
     if(this.persistData){
         this.conf.lastWrite = Date.now();
         fs.writeFileSync(this.confFile, JSON.stringify(this.conf));
@@ -78,15 +89,24 @@ PortManagerServer.prototype.beforeExit = function(){
     this.server.close();
 };
 
+/**
+ * Restart express server
+ */
 PortManagerServer.prototype.restart = function(){
     this.server.close();
     this.start();
 };
 
-PortManagerServer.prototype.isPortAvailable = function(askedPort){
-    return Object.keys(this.registeredApps).every(appName => this.registeredApps[appName].port != askedPort);
-}
+/**
+ * Look if the given port is available for application
+ */
+PortManagerServer.prototype.isPortAvailable = function(askedPort, application){
+    return Object.keys(this.registeredApps).every(appName => ((this.registeredApps[appName].port != askedPort && appName != application) || (this.registeredApps[appName].port == askedPort && appName == application)));
+};
 
+/**
+ * Starts the indexing server
+ */
 PortManagerServer.prototype.start = function(){
     this.beforeExitInit();
     var that = this;
@@ -101,26 +121,19 @@ PortManagerServer.prototype.start = function(){
 
     this.app.post('/application', function(req, res){
         var application = req.body;
-        if(that.registeredApps.hasOwnProperty(application.name)){
-            res.statusMessage = "Application already registered";
-            res.status(400);
-            res.json({error:true, message:"Application already registered"});
+        var askedPort = application.port;
+        var canRegister = that.conf.portMin <= askedPort && that.conf.portMax >= askedPort && that.isPortAvailable(askedPort, application.name);
+        if(canRegister){
+            that.registeredApps[application.name] = {port: askedPort, registeredAt: Date.now()};
+            console.log("Registered application ", that.registeredApps[application.name]);
+            res.statusMessage = "Application registered";
+            res.status(201);
+            res.json({name:application.name, port:application.port});
         }
         else{
-            var askedPort = application.port;
-            var canRegister = that.conf.portMin <= askedPort && that.conf.portMax >= askedPort && that.isPortAvailable(askedPort);
-            if(canRegister){
-                that.registeredApps[application.name] = {port: askedPort, registeredAt: Date.now()};
-                console.log("Registered application ", that.registeredApps[application.name]);
-                res.statusMessage = "Application registered";
-                res.status(201);
-                res.json({name:application.name, port:application.port});
-            }
-            else{
-                res.statusMessage = "Wrong port";
-                res.status(400);
-                res.json({error:true, message:"Port is unavailable or out of managed ports (["+that.conf.portMin+" to "+that.conf.portMax+"])"});
-            }
+            res.statusMessage = "Wrong port";
+            res.status(400);
+            res.json({error:true, message:"Port is unavailable or out of managed ports (["+that.conf.portMin+" to "+that.conf.portMax+"])"});
         }
     });
 
@@ -144,4 +157,4 @@ PortManagerServer.prototype.start = function(){
     console.log("ServerManager started on port ", this.conf.appPort);
 };
 
-module.exports = new PortManagerServer();
+module.exports = PortManagerServer;
