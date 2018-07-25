@@ -32,13 +32,13 @@ Client are simple too. Here's the fast way :
 ```javascript
 let PortManagerClient = require("./component/portmanager.client");
 
-(new PortManagerClient("APPLICATION","SERVERHOST",8080).register(8081).then(data => {
+(new PortManagerClient("APPLICATION","SERVERHOST",8080)).register(8081).then(data => {
     console.log("Client- Successfully registered : ", data);
 }).catch(err => {
     console.error("Client - Error during registering : ", err);
 });
 ```
-The PortManagerClient will try to register on the server at ``"SERVERHOST"`` listening on port 8080, and will asked for the slot on port ``8081``.
+The PortManagerClient will try to register on the server at ``SERVERHOST`` listening on port 8080, and will asked for the slot on port ``8081``.
 
 ## Error cases
 In some cases, the server will refuses to register your application, there are some reasons possible : 
